@@ -12,39 +12,40 @@
 #include <math.h>
 #include <sndfile.hh>
 
+#define FRAMES_PER_BUFFER (512)
+
 class AudioFile{
     
 public:
     
-    AudioFile(const char* filename) {
-        
-        decoder = SndfileHandle(filename);
+    AudioFile(const char* fname) {
+        filename = fname;
+        decoder = SndfileHandle(fname);
         err = decoder.error();
         
         if(err == 0){
             channels = decoder.channels();
             samplerate = decoder.samplerate();
             frames = decoder.frames();
-            buffer = new float [frames*channels];
-            double_buffer = new float[frames*channels];
+            double_buffer = new float [FRAMES_PER_BUFFER*channels];
+            buffer = new float [FRAMES_PER_BUFFER*channels];
         } else {printf("The file does not exist."); return;}
-        decoder.read(buffer, frames*channels);
-        count = 0;
+        decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
+        for(int i = 0; i<FRAMES_PER_BUFFER*channels; i++){
+            buffer[i] = double_buffer[i];
+        }
+        count = frames/2;
         
         err = Pa_Initialize();
+        stream = 0;
         
-        PaStreamParameters params;
-        params.device = Pa_GetDefaultOutputDevice();
-        
-        params.channelCount = channels;       /* stereo output */
-        params.sampleFormat = paFloat32; /* 32 bit floating point output */
-        
-        err = Pa_OpenStream
+        err = Pa_OpenDefaultStream
         (&stream,
-         NULL,
-         &params,
+         0,
+         channels,
+         paFloat32,
          samplerate,
-         256, NULL,
+         FRAMES_PER_BUFFER,
          &AudioFile::paCallback,
          this);
         
@@ -77,15 +78,23 @@ public:
             if(count>=frames*channels)
                 return  false;
             
+            /decoder = SndfileHandle(filename);
+            
+            for(int i = 0; i<count; i += FRAMES_PER_BUFFER*channels)
+                decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
+            for(int i = 0; i<FRAMES_PER_BUFFER*channels; i++){
+                buffer[i] = double_buffer[i];
+            }
+            
             read = true;
             
-            for ( int i = count+1 ; i < count+256*channels; i+=2)
+            for ( int i = 1 ; i < FRAMES_PER_BUFFER*channels; i+=channels)
             {
                 if (max_r < buffer[i]) max_r = buffer[i];
                 if (min_r > buffer[i]) min_r = buffer[i];
             }
             
-            for ( int i = count ; i < count+256*channels; i+=2)
+            for ( int i = 0 ; i < FRAMES_PER_BUFFER*channels; i+=channels)
             {
                 if (max_l < buffer[i]) max_l = buffer[i];
                 if (min_l > buffer[i]) min_l = buffer[i];
@@ -93,13 +102,13 @@ public:
             
             float x = 20*log10((max_r-min_r)/2);
             float y = 20*log10((max_l-min_l)/2);
-            printf("%f %f\n", x, y);
+            //printf("%f %f\n", x, y);
             max_r = 0; min_r = 0;
             max_l = 0; min_l = 0;
         }
         if ( (int)((count/channels) / samplerate) != time){
             time = (int)((count/channels)  / samplerate);
-           //printf("%i \n",  time);
+           printf("%i \n",  time);
         }
         return Pa_IsStreamActive(stream);
     }
@@ -117,8 +126,10 @@ private:
         unsigned long i;
         (void)input;
         
-        for (i = 0; i < frameCount*channels; i++)
-            *out++ = buffer[count++];
+        for (i = 0; i < frameCount*channels; i++){
+            *out++ = buffer[i];
+            count++;
+        }
         
         read = false;
         
@@ -139,8 +150,10 @@ private:
     SndfileHandle decoder;
     PaStream* stream;
     int samplerate, err, channels, time;
+    const char* filename;
     unsigned long frames, count;
     float* buffer;
+    float* double_buffer;
     float* adress;
     float max_r, min_r, max_l, min_l;
     bool read;
@@ -149,7 +162,7 @@ private:
 
 int main(void){
     
-    AudioFile af = AudioFile("/Users/kj/Desktop/newpa/newpa/test2.wav");
+    AudioFile af = AudioFile("/Users/kj/Desktop/newpa/newpa/test3.aif");
     
     if(af.play())
         while(af.foreground());
