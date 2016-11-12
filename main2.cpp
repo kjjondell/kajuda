@@ -23,9 +23,10 @@ public:
         
         if(err == 0){
             channels = decoder.channels();
-            samplerate = decoder.samplerate()*0.75;
+            samplerate = decoder.samplerate();
             frames = decoder.frames();
             buffer = new float [frames*channels];
+            double_buffer = new float[frames*channels];
         } else {printf("The file does not exist."); return;}
         decoder.read(buffer, frames*channels);
         count = 0;
@@ -51,10 +52,11 @@ public:
         
         if(err != 0) printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
         
-        max = 0; min = 0;
+        max_r = 0; min_r = 0;
+        max_l = 0; min_l = 0;
         
         time = (int)((frames)/samplerate);
-        printf("Time of song: %i:%i \n",  time/60, time%60);
+        printf("Time of song: %i:%s%i \n",  time/60, time%60 <= 9 ? "0" : "",  time%60);
         
     }
     
@@ -77,19 +79,27 @@ public:
             
             read = true;
             
-            for ( int i = count ; i < count+256*channels; i++)
+            for ( int i = count+1 ; i < count+256*channels; i+=2)
             {
-                if (max < buffer[i]) max = buffer[i];
-                if (min > buffer[i]) min = buffer[i];
+                if (max_r < buffer[i]) max_r = buffer[i];
+                if (min_r > buffer[i]) min_r = buffer[i];
             }
             
-            //float x = (max-min);
-           // printf("%i \n", (int)(x*500));
-            max = 0; min = 0;
+            for ( int i = count ; i < count+256*channels; i+=2)
+            {
+                if (max_l < buffer[i]) max_l = buffer[i];
+                if (min_l > buffer[i]) min_l = buffer[i];
+            }
+            
+            float x = 20*log10((max_r-min_r)/2);
+            float y = 20*log10((max_l-min_l)/2);
+            printf("%f %f\n", x, y);
+            max_r = 0; min_r = 0;
+            max_l = 0; min_l = 0;
         }
         if ( (int)((count/channels) / samplerate) != time){
             time = (int)((count/channels)  / samplerate);
-           printf("%i \n",  time);
+           //printf("%i \n",  time);
         }
         return Pa_IsStreamActive(stream);
     }
@@ -132,14 +142,14 @@ private:
     unsigned long frames, count;
     float* buffer;
     float* adress;
-    float max, min;
+    float max_r, min_r, max_l, min_l;
     bool read;
     
 };
 
 int main(void){
     
-    AudioFile af = AudioFile("/Users/kj/Desktop/newpa/newpa/test3.aif");
+    AudioFile af = AudioFile("/Users/kj/Desktop/newpa/newpa/test2.wav");
     
     if(af.play())
         while(af.foreground());
