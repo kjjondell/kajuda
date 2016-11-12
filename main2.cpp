@@ -13,7 +13,7 @@
 #include <sndfile.hh>
 
 #define FRAMES_PER_BUFFER (512)
-
+#define N_BUFFER (5)
 class AudioFile{
     
 public:
@@ -27,7 +27,7 @@ public:
             channels = decoder.channels();
             samplerate = decoder.samplerate();
             frames = decoder.frames();
-            double_buffer = new float [FRAMES_PER_BUFFER*channels];
+            double_buffer = new float [N_BUFFER*FRAMES_PER_BUFFER*channels];
             buffer = new float [FRAMES_PER_BUFFER*channels];
         } else {printf("The file does not exist."); return;}
         decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
@@ -35,7 +35,7 @@ public:
             buffer[i] = double_buffer[i];
         }
         count = frames/2;
-        
+        read_interval = 0;
         err = Pa_Initialize();
         stream = 0;
         
@@ -77,15 +77,17 @@ public:
         if (!read){
             if(count>=frames*channels)
                 return  false;
+            int writing_interval = read_interval;
+            read_interval = (read_interval+1)%N_BUFFER;
             
-            /decoder = SndfileHandle(filename);
-            
-            for(int i = 0; i<count; i += FRAMES_PER_BUFFER*channels)
-                decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
             for(int i = 0; i<FRAMES_PER_BUFFER*channels; i++){
-                buffer[i] = double_buffer[i];
+                buffer[i] = double_buffer[(read_interval*FRAMES_PER_BUFFER*channels)+i];
             }
-            
+
+//          decoder = SndfileHandle(filename);
+//          for(int i = 0; i<count; i += FRAMES_PER_BUFFER*channels)
+            decoder.read(double_buffer+writing_interval*FRAMES_PER_BUFFER*channels, FRAMES_PER_BUFFER*channels);
+
             read = true;
             
             for ( int i = 1 ; i < FRAMES_PER_BUFFER*channels; i+=channels)
@@ -154,6 +156,7 @@ private:
     unsigned long frames, count;
     float* buffer;
     float* double_buffer;
+    int read_interval;
     float* adress;
     float max_r, min_r, max_l, min_l;
     bool read;
@@ -162,7 +165,7 @@ private:
 
 int main(void){
     
-    AudioFile af = AudioFile("/Users/kj/Desktop/newpa/newpa/test3.aif");
+    AudioFile af = AudioFile("/home/julien/Musique/Mixxx/Demon_You_are_my_high.wav");
     
     if(af.play())
         while(af.foreground());
