@@ -53,6 +53,9 @@
            <iconset resource="res/res.qrc">
             <normaloff>:/ic_play_arrow_black_48dp.png</normaloff>:/ic_play_arrow_black_48dp.png</iconset>
           </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
          </widget>
         </item>
         <item alignment="Qt::AlignTop">
@@ -120,10 +123,10 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
-       <widget class="QWidget" name="volmeter2" native="true"/>
+       <widget class="LevelMeter" name="volmeter2" native="true"/>
       </item>
       <item>
-       <widget class="QWidget" name="volmeter1" native="true"/>
+       <widget class="LevelMeter" name="volmeter1" native="true"/>
       </item>
      </layout>
     </item>
@@ -140,6 +143,13 @@
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>LevelMeter</class>
+   <extends>QWidget</extends>
+   <header>levelmeter.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="res/res.qrc"/>
  </resources>

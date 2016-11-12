@@ -12,10 +12,14 @@ TARGET = kajuda
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-        mainwindow.cpp
+SOURCES += \
+        main.cpp \
+        mainwindow.cpp \
+        levelmeter.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += \
+        mainwindow.h \
+        levelmeter.h
 
 FORMS    += mainwindow.ui
 
