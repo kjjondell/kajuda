@@ -78,10 +78,7 @@ public:
             if(count>=frames*channels)
                 return  false;
             
-            decoder = SndfileHandle(filename);
-            
-            for(int i = 0; i<count; i += FRAMES_PER_BUFFER*channels)
-                decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
+            decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
             for(int i = 0; i<FRAMES_PER_BUFFER*channels; i++){
                 buffer[i] = double_buffer[i];
             }
@@ -253,14 +250,14 @@ private:
 
 int main(void){
     
-    // AudioFile af = AudioFile("/Users/kj/Desktop/newpa/newpa/test_in.wav");
+    AudioFile af = AudioFile("/home/julien/Musique/Mixxx/Demon_You_are_my_high.wav");
    // printf("START!");
-    AudioInputFile aif = AudioInputFile("/Users/kj/Desktop/newpa/newpa/test_in.wav");
+    //AudioInputFile aif = AudioInputFile("/Users/kj/Desktop/newpa/newpa/test_in.wav");
     
   //  printf("STOP!");
     
-    //  if(af.play())
-      //  while(af.foreground());
+    if(af.play())
+      while(af.foreground());
     
     printf("Done!");
     
