@@ -14,31 +14,55 @@
 
 #define FRAMES_PER_BUFFER (512)
 
+
+
+
 class AudioFile{
     
 public:
     
-    AudioFile(const char* fname) {
+    AudioFile(const char* fname, int sample_rate =-1 ) {
         filename = fname;
         decoder = SndfileHandle(fname);
         err = decoder.error();
-        
+
         if(err == 0){
             channels = decoder.channels();
-            samplerate = decoder.samplerate();
+            if(sample_rate==-1)
+                samplerate = decoder.samplerate();
+            else samplerate = sample_rate;
             frames = decoder.frames();
             double_buffer = new float [FRAMES_PER_BUFFER*channels];
             buffer = new float [FRAMES_PER_BUFFER*channels];
         } else {printf("The file does not exist."); return;}
+        stream = 0;
+
+        max_r = 0; min_r = 0;
+        max_l = 0; min_l = 0;
+        
+        time = (int)((frames)/samplerate);
+        printf("Time of song: %i:%s%i \n",  time/60, time%60 <= 9 ? "0" : "",  time%60);
+        
+    }
+    
+    bool play (int start_time = 0){
+
+        decoder = SndfileHandle(filename);
+
+        //go through the beginning of the file
+        for(int i=0 ;i<decoder.samplerate()*start_time;i++)
+            decoder.read(buffer, channels);
+
         decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
         for(int i = 0; i<FRAMES_PER_BUFFER*channels; i++){
             buffer[i] = double_buffer[i];
         }
+
         count = 0;
-        
+
         err = Pa_Initialize();
-        stream = 0;
-        
+
+
         err = Pa_OpenDefaultStream
         (&stream,
          0,
@@ -48,20 +72,10 @@ public:
          FRAMES_PER_BUFFER,
          &AudioFile::paCallback,
          this);
-        
-        err = Pa_SetStreamFinishedCallback( stream, &AudioFile::paStreamFinished);
-        
+
         if(err != 0) printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
-        
-        max_r = 0; min_r = 0;
-        max_l = 0; min_l = 0;
-        
-        time = (int)((frames)/samplerate);
-        printf("Time of song: %i:%s%i \n",  time/60, time%60 <= 9 ? "0" : "",  time%60);
-        
-    }
-    
-    bool play (){
+        err = Pa_SetStreamFinishedCallback( stream, &AudioFile::paStreamFinished);
+
         if(err != 0){
             printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
             return false;
@@ -73,6 +87,20 @@ public:
         return true;
     }
     
+
+    bool stop (){
+        if(err != 0){
+            printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
+            return false;
+        }
+
+        PaError err = Pa_StopStream(stream);
+        // err = Pa_StopStream(stream);
+        err = Pa_Terminate();
+        return true;
+    }
+
+
     bool foreground(){
         if (!read){
             if(count>=frames*channels)
