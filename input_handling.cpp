@@ -12,8 +12,8 @@
 #include <math.h>
 #include <sndfile.hh>
 
-#define FRAMES_PER_BUFFER (100000)
-#define N_BUFFER (5)
+#define FRAMES_PER_BUFFER (1000)
+#define N_BUFFER (100)
 class AudioFile{
 
 public:
@@ -23,6 +23,7 @@ public:
         decoder = SndfileHandle(fname);
         err = decoder.error();
         read_interval = 0;
+        write_interval = 1;
         if(err == 0){
             channels = decoder.channels();
             samplerate = decoder.samplerate();
@@ -30,7 +31,7 @@ public:
             double_buffer = new float [FRAMES_PER_BUFFER*channels];
             buffer = new float [N_BUFFER*FRAMES_PER_BUFFER*channels];
         } else {printf("The file does not exist."); return;}
-        decoder.read(buffer, N_BUFFER*FRAMES_PER_BUFFER*channels);
+          decoder.read(buffer, FRAMES_PER_BUFFER*channels);
 //        for(int i = 0; i<FRAMES_PER_BUFFER*channels; i++){
 //            buffer[i] = double_buffer[i];
 //        }
