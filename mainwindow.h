@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-
+#include "input_handling.h"
 namespace Ui {
 class MainWindow;
 }
@@ -22,8 +22,14 @@ private slots:
 
     void on_buttonPlay_clicked();
 
+    void on_sliderTrackPos_sliderReleased();
+
 private:
     Ui::MainWindow *ui;
+    AudioFile* af;
+    std::string filename;
+    int start_time;
+
 };
 
 #endif // MAINWINDOW_H

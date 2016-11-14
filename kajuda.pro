@@ -19,9 +19,20 @@ SOURCES += \
 
 HEADERS  += \
         mainwindow.h \
-        levelmeter.h
+        levelmeter.h \
+        input_handling.h
+
+
 
 FORMS    += mainwindow.ui
 
+
+LIBS += -lportaudio -lsndfile
+
 RESOURCES += \
     res/res.qrc
+
+HEADERS += \
+    input_handling.h
+
+QMAKE_CXXFLAGS += -std=c++11
