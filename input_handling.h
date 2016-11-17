@@ -12,17 +12,23 @@
 #include <math.h>
 #include <sndfile.hh>
 
+#include <QObject>
+#include <QThread>
+
 #define FRAMES_PER_BUFFER (1000)
 
 
 
 
-class AudioFile{
-    
-public:
+class AudioFile : public QObject {
+    Q_OBJECT
 
+public:
     //AudioFile is called when a new file is loaded, but also when changing sample rate or time in the time bar.
     AudioFile(const char* fname, int start_time, int sample_rate =-1 ) {
+        moveToThread(&thread);
+        thread.start();
+
         //TODO: Check file extension
         filename = fname;
         stream = 0;
@@ -60,7 +66,11 @@ public:
         
         time = (int)((frames)/samplerate);
         printf("Time of song: %i:%s%i \n",  time/60, time%60 <= 9 ? "0" : "",  time%60);
-        
+    }
+
+    ~AudioFile() {
+        thread.quit();
+        thread.wait();
     }
     
     bool start (){
@@ -111,6 +121,9 @@ public:
 
 
     bool foreground(){
+        static int justToDemonstrateHowThisWorks = 0;
+        emit timeChanged(justToDemonstrateHowThisWorks++ / 100000);
+
         if (!read){
             if(count>=frames*channels)
                 return  false;
@@ -145,10 +158,14 @@ public:
         }
         return Pa_IsStreamActive(stream);
     }
-    
+
+
+signals:
+    void timeChanged(int time);
 
 
 private:
+    QThread thread;
     
     int paCallbackFunction(const void *input,
                            void *output,

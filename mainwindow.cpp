@@ -26,6 +26,8 @@ void MainWindow::on_buttonOpenFile_clicked()
     filename = fileName.toStdString();
     const char* f_name = filename.c_str();
     af = new AudioFile(f_name,0);
+    QObject::connect(af, &AudioFile::timeChanged,
+                     this->ui->sliderTrackPos, &QSlider::setValue);
     }
 
 void MainWindow::on_buttonRecord_clicked()
