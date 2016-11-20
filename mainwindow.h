@@ -25,6 +25,7 @@ private slots:
     void on_sliderTrackPos_sliderReleased();
 
 private:
+
     Ui::MainWindow *ui;
     AudioFile* af;
     std::string filename;

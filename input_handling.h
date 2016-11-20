@@ -64,8 +64,8 @@ public:
         max_l = 0;
         min_l = 0;
         
-        time = (int)((frames)/samplerate);
-        printf("Time of song: %i:%s%i \n",  time/60, time%60 <= 9 ? "0" : "",  time%60);
+        time_of_song = (int)((frames)/samplerate);
+     //   printf("Time of song: %i:%s%i \n",  time/60, time%60 <= 9 ? "0" : "",  time%60);
     }
 
     ~AudioFile() {
@@ -73,6 +73,10 @@ public:
         thread.wait();
     }
     
+    int getTimeOfSong(){
+        return time_of_song;
+    }
+
     bool start (){
 
         err = Pa_Initialize();
@@ -104,6 +108,7 @@ public:
     static bool play(AudioFile* af){
         if(af->start())
             while(af->foreground());
+                  //Pa_Sleep(500/samplerate);
 
         return true;
     }
@@ -119,10 +124,22 @@ public:
         return true;
     }
 
+    void getFormattedTime(int time){
+        timestring = new char[10];
+        sprintf(timestring, "-%i:%s%i", time/60, time%60 <= 9 ? "0" : "",  time%60);
+    }
+
+    void setTime(int fraction){
+        printf("%i ",fraction);
+        count = (frames*channels*100)/fraction;
+        printf("%i %i %i \n",count, time, (int)((count/channels)  / samplerate));
+    }
 
     bool foreground(){
-        static int justToDemonstrateHowThisWorks = 0;
-        emit timeChanged(justToDemonstrateHowThisWorks++ / 100000);
+        //static int justToDemonstrateHowThisWorks = 0;
+        emit timeChanged(time*100 / time_of_song);
+        getFormattedTime(time_of_song-time);
+        emit formatted_timeChanged(timestring);
 
         if (!read){
             if(count>=frames*channels)
@@ -162,7 +179,7 @@ public:
 
 signals:
     void timeChanged(int time);
-
+    void formatted_timeChanged(char * time);
 
 private:
     QThread thread;
@@ -201,8 +218,9 @@ private:
     
     SndfileHandle decoder;
     PaStream* stream;
-    int samplerate, err, channels, time;
+    int samplerate, err, channels, time, time_of_song;
     const char* filename;
+    char * timestring;
     unsigned long frames, count;
     float* buffer;
     float* double_buffer;

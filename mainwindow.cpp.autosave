@@ -25,7 +25,7 @@ void MainWindow::on_buttonOpenFile_clicked()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open Audio File"), "~");
     filename = fileName.toStdString();
     const char* f_name = filename.c_str();
-   printf(f_name);
+  // printf(f_name);
     af = new AudioFile(f_name,0);
    // printf("\n");
    // printf(af->filename);
