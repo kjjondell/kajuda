@@ -24,12 +24,17 @@ private slots:
 
     void on_sliderTrackPos_sliderReleased();
 
+    void on_sliderTrackPos_sliderPressed();
+
 private:
+
+    void moveSlider(int time);
 
     Ui::MainWindow *ui;
     AudioFile* af;
     std::string filename;
     int start_time;
+    bool slider_pressed, isPlaying;
 
 };
 

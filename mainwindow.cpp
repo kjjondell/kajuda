@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    slider_pressed = false;
 }
 
 MainWindow::~MainWindow()
@@ -30,7 +31,7 @@ void MainWindow::on_buttonOpenFile_clicked()
    // printf("\n");
    // printf(af->filename);
     QObject::connect(af, &AudioFile::timeChanged,
-                     this->ui->sliderTrackPos, &QSlider::setValue);
+                     this, &MainWindow::moveSlider);
 
     QObject::connect(af, &AudioFile::formatted_timeChanged,
                      this->ui->labelTrackTime, &QLabel::setText);
@@ -42,6 +43,11 @@ void MainWindow::on_buttonOpenFile_clicked()
    // this->setTime(af->getTimeOfSong());
     }
 
+void MainWindow::moveSlider(int time){
+    if(!slider_pressed)
+        this->ui->sliderTrackPos->setValue(time);
+}
+
 void MainWindow::on_buttonRecord_clicked()
 {
 
@@ -52,7 +58,7 @@ void MainWindow::on_buttonPlay_clicked()
 
 //    TODO: Check that af was correctly initialized
 
-    static bool isPlaying = false;
+    //static bool isPlaying = false;
 
     QString icon;
     if (isPlaying) {
@@ -70,13 +76,24 @@ void MainWindow::on_buttonPlay_clicked()
     isPlaying = !isPlaying;
     this->ui->buttonPlay->setIcon(QIcon(icon));
 
-    qDebug() << isPlaying;
+//    qDebug() << isPlaying;
 }
 
 void MainWindow::on_sliderTrackPos_sliderReleased()
 {
+    slider_pressed = false;
+    if(isPlaying)
+        af->stop();
   af->setTime(this->ui->sliderTrackPos->value());
   //qDebug() << af->timestring;
   this->ui->labelTrackTime->setText(af->timestring);
   this->ui->labelTrackTime->update();
+  if(isPlaying){
+      std::thread t1(AudioFile::play, af);
+      t1.detach();
+  }
+}
+
+void MainWindow::on_sliderTrackPos_sliderPressed(){
+    slider_pressed = true;
 }
