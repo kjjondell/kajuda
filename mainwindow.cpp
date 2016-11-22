@@ -36,12 +36,26 @@ void MainWindow::on_buttonOpenFile_clicked()
     QObject::connect(af, &AudioFile::formatted_timeChanged,
                      this->ui->labelTrackTime, &QLabel::setText);
 
+    QObject::connect(af, &AudioFile::l_amplitude,
+                     this, &MainWindow::moveLMeter);
+
+    QObject::connect(af, &AudioFile::r_amplitude,
+                     this, &MainWindow::moveRMeter);
 
     this->ui->labelInfo->setText(f_name);
     this->ui->labelTrackTime->setText(af->timestring);
     this->ui->labelTrackTime->update();
    // this->setTime(af->getTimeOfSong());
     }
+
+void MainWindow::moveLMeter(float amp){
+    qDebug()<<amp;
+    this->ui->volmeter1->levelChanged(amp,amp,1000);
+}
+
+void MainWindow::moveRMeter(float amp){
+    this->ui->volmeter2->levelChanged(amp,amp,1000);
+}
 
 void MainWindow::moveSlider(int time){
     if(!slider_pressed)

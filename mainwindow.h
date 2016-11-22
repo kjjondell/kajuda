@@ -29,6 +29,8 @@ private slots:
 private:
 
     void moveSlider(int time);
+    void moveLMeter(float amp);
+    void moveRMeter(float amp);
 
     Ui::MainWindow *ui;
     AudioFile* af;

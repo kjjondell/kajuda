@@ -171,29 +171,34 @@ public:
                 buffer[i] = double_buffer[i];
             }
             read = true;
-            
             for ( int i = 1 ; i < FRAMES_PER_BUFFER*channels; i+=channels)
             {
                 if (max_r < buffer[i]) max_r = buffer[i];
                 if (min_r > buffer[i]) min_r = buffer[i];
             }
-            
+
             for ( int i = 0 ; i < FRAMES_PER_BUFFER*channels; i+=channels)
             {
                 if (max_l < buffer[i]) max_l = buffer[i];
                 if (min_l > buffer[i]) min_l = buffer[i];
             }
-            
-            float x = 20*log10((max_r-min_r)/2);
-            float y = 20*log10((max_l-min_l)/2);
+
+            float x = log10((max_r-min_r)/2);
+            emit l_amplitude(1.0+x);
+            float y = log10((max_l-min_l)/2);
+            emit r_amplitude(1.0+y);
             //printf("%f %f\n", x, y);
             max_r = 0; min_r = 0;
             max_l = 0; min_l = 0;
+
         }
-       // if ( (int)((count/channels) / samplerate) != time){
+
+
+        if ( (int)((count/channels) / samplerate) != time){
             time = ((count/channels)  / samplerate);
 //            printf("%i \n",  time);
-      //  }
+
+        }
         return Pa_IsStreamActive(stream);
     }
 
@@ -202,6 +207,8 @@ public:
 signals:
     void timeChanged(int time);
     void formatted_timeChanged(char * time);
+    void l_amplitude(float amp);
+    void r_amplitude(float amp);
 
 private:
     QThread thread;
@@ -240,7 +247,7 @@ private:
     
     SndfileHandle decoder;
     PaStream* stream;
-    int samplerate, err, channels, time, time_of_song;
+    int samplerate, err, channels, time, time_of_song, deb_count = 0;
     const char* filename;
     unsigned long frames, count;
     float* buffer;

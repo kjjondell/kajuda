@@ -87,6 +87,7 @@ void LevelMeter::levelChanged(float rmsLevel, float peakLevel, int numSamples)
 {
     // Smooth the RMS signal
     const float smooth = pow(float(0.9), static_cast<float>(numSamples) / 256); // TODO: remove this magic number
+
     rmsLevel = (rmsLevel * smooth) + (rmsLevel * (1.0 - smooth));
 
     if (peakLevel > decayedPeakLevel) {
