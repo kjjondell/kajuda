@@ -108,7 +108,7 @@ public:
         if(err != 0){
             printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
          }
-
+    //decoder.seek(count,SEEK_CUR );
         decoder = SndfileHandle(filename);
         for (int i = 0; i<count; i+=FRAMES_PER_BUFFER*channels)
             decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
@@ -258,12 +258,12 @@ private:
     
 };
 
-class AudioInputFile{
-    
+class AudioInputFile : public QObject {
+    Q_OBJECT
 public:
     
     AudioInputFile (const char* fname){
-        channels = 2 ;
+        channels = 1 ;
         samplerate = 44100 ;
          frames = samplerate*5*channels;
         buffer = new float[frames];
@@ -271,7 +271,9 @@ public:
         err = Pa_Initialize();
         stream = 0;
         count = 0;
-        
+    }
+
+    bool start(){
         err = Pa_OpenDefaultStream
         (&stream,
          channels,
@@ -281,21 +283,57 @@ public:
          512,
          &AudioInputFile::paCallback,
          this);
-        
-        Pa_StartStream(stream);
-        while(count <= frames*channels){
+
+    Pa_StartStream(stream);
+    return true;
+    }
+
+    bool foreground(){
             if ( (int)((count/channels) / (samplerate)) != time){
                 time = (int)((count/channels)  / (samplerate));
-                printf("%i \n",  time);
+                qDebug()<<time;
             }
             if(read){
                 read = false;
                 encoder.write(buffer, 512*channels);
+                for ( int i = 1 ; i < FRAMES_PER_BUFFER*channels; i+=channels)
+                {
+                    if (max_r < buffer[i]) max_r = buffer[i];
+                    if (min_r > buffer[i]) min_r = buffer[i];
+                }
+
+                for ( int i = 0 ; i < FRAMES_PER_BUFFER*channels; i+=channels)
+                {
+                    if (max_l < buffer[i]) max_l = buffer[i];
+                    if (min_l > buffer[i]) min_l = buffer[i];
+                }
+
+                float x = log10((max_r-min_r)/2);
+                emit l_amplitude(1.0+x);
+                float y = log10((max_l-min_l)/2);
+                emit r_amplitude(1.0+y);
+                //printf("%f %f\n", x, y);
+                max_r = 0; min_r = 0;
+                max_l = 0; min_l = 0;
+                buffer = new float[frames];
             }
-        }
-        
+        return true;
+    }
+
+    void stop(){
+        Pa_StopStream(stream);
     }
     
+    static void record(AudioInputFile* af){
+        if(af->start())
+            while(af->foreground());
+        af->stop();
+    }
+
+signals:
+    void l_amplitude(float amp);
+    void r_amplitude(float amp);
+
 private:
     
     int paCallbackFunction(const void *input,
@@ -318,7 +356,7 @@ private:
         
         read = true;
         
-        return count >= frames *channels ? paComplete : paContinue;
+        return paContinue;
     }
     
     static void paStreamFinished(void* userData){

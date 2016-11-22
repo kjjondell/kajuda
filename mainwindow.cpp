@@ -49,8 +49,7 @@ void MainWindow::on_buttonOpenFile_clicked()
     }
 
 void MainWindow::moveLMeter(float amp){
-    qDebug()<<amp;
-    this->ui->volmeter1->levelChanged(amp,amp,1000);
+   this->ui->volmeter1->levelChanged(amp,amp,1000);
 }
 
 void MainWindow::moveRMeter(float amp){
@@ -63,8 +62,21 @@ void MainWindow::moveSlider(int time){
 }
 
 void MainWindow::on_buttonRecord_clicked()
-{
+{   static bool isRecording = false;
+    if(!isRecording){
+    aif = new AudioInputFile("/Volumes/2nd drive/Downloads/new.wav");
 
+    QObject::connect(aif, &AudioInputFile::l_amplitude,
+                     this, &MainWindow::moveLMeter);
+
+    QObject::connect(aif, &AudioInputFile::r_amplitude,
+                     this, &MainWindow::moveRMeter);
+
+    std::thread t1(AudioInputFile::record, aif);
+    t1.detach();
+    } else
+        aif->stop();
+    isRecording = !isRecording;
 }
 
 void MainWindow::on_buttonPlay_clicked()
