@@ -13,6 +13,11 @@
 #include <sndfile.hh>
 
 #include <QObject>
+#include <QString>
+#include <QFileDialog>
+#include <QIcon>
+#include <QLoggingCategory>
+#include <QMessageLogger>
 #include <QThread>
 
 #define FRAMES_PER_BUFFER (1000)
@@ -32,7 +37,11 @@ public:
         //TODO: Check file extension
         filename = fname;
         stream = 0;
+        err = 0;
         decoder = SndfileHandle(filename);
+
+
+       // qDebug() << fname;
 
         if(err == 0){
             channels = decoder.channels();
@@ -53,18 +62,19 @@ public:
         for(int i = 0; i < decoder.samplerate() * start_time; i++)
             decoder.read(buffer, channels);
 
-        decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
+        /*decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
         for (int i = 0; i<FRAMES_PER_BUFFER*channels; i++){
             buffer[i] = double_buffer[i];
-        }
+        }*/
 
         count = 0;
         max_r = 0;
         min_r = 0;
         max_l = 0;
         min_l = 0;
-        
+
         time_of_song = (int)((frames)/samplerate);
+        setTime(0);
      //   printf("Time of song: %i:%s%i \n",  time/60, time%60 <= 9 ? "0" : "",  time%60);
     }
 
@@ -99,6 +109,13 @@ public:
             printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
          }
 
+        decoder = SndfileHandle(filename);
+        for (int i = 0; i<count; i+=FRAMES_PER_BUFFER*channels)
+            decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
+        for (int i = 0; i<FRAMES_PER_BUFFER*channels; i++){
+            buffer[i] = double_buffer[i];
+        }
+
         read = false;
         PaError err = Pa_StartStream(stream);
         // err = Pa_StopStream(stream);
@@ -109,7 +126,8 @@ public:
         if(af->start())
             while(af->foreground());
                   //Pa_Sleep(500/samplerate);
-
+        af->stop();
+    qDebug()<<"HEU";
         return true;
     }
 
@@ -130,9 +148,12 @@ public:
     }
 
     void setTime(int fraction){
-        printf("%i ",fraction);
-        count = (frames*channels*100)/fraction;
-        printf("%i %i %i \n",count, time, (int)((count/channels)  / samplerate));
+        //printf("%i ",fraction);
+        count = (frames*channels*fraction)/100;
+        time = ((count/channels)  / samplerate);
+        getFormattedTime(time_of_song-time);
+       // qDebug() << timestring;
+       // printf("%i %i %i \n",count, time, (int)((count/channels)  / samplerate));
     }
 
     bool foreground(){
@@ -169,13 +190,14 @@ public:
             max_r = 0; min_r = 0;
             max_l = 0; min_l = 0;
         }
-        if ( (int)((count/channels) / samplerate) != time){
-            time = (int)((count/channels)  / samplerate);
+       // if ( (int)((count/channels) / samplerate) != time){
+            time = ((count/channels)  / samplerate);
 //            printf("%i \n",  time);
-        }
+      //  }
         return Pa_IsStreamActive(stream);
     }
 
+    char * timestring;
 
 signals:
     void timeChanged(int time);
@@ -220,7 +242,6 @@ private:
     PaStream* stream;
     int samplerate, err, channels, time, time_of_song;
     const char* filename;
-    char * timestring;
     unsigned long frames, count;
     float* buffer;
     float* double_buffer;

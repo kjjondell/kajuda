@@ -25,7 +25,7 @@ void MainWindow::on_buttonOpenFile_clicked()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open Audio File"), "~");
     filename = fileName.toStdString();
     const char* f_name = filename.c_str();
-   printf(f_name);
+  // printf(f_name);
     af = new AudioFile(f_name,0);
    // printf("\n");
    // printf(af->filename);
@@ -37,6 +37,8 @@ void MainWindow::on_buttonOpenFile_clicked()
 
 
     this->ui->labelInfo->setText(f_name);
+    this->ui->labelTrackTime->setText(af->timestring);
+    this->ui->labelTrackTime->update();
    // this->setTime(af->getTimeOfSong());
     }
 
@@ -54,12 +56,12 @@ void MainWindow::on_buttonPlay_clicked()
 
     QString icon;
     if (isPlaying) {
-        icon = ":/ic_pause_black_48dp.png";
+        icon = ":/ic_play_arrow_black_48dp.png";
         af->stop();
 
     } else {
-        icon = ":/ic_play_arrow_black_48dp.png";
 
+        icon = ":/ic_pause_black_48dp.png";
         std::thread t1(AudioFile::play, af);
         t1.detach();
 
@@ -73,5 +75,8 @@ void MainWindow::on_buttonPlay_clicked()
 
 void MainWindow::on_sliderTrackPos_sliderReleased()
 {
-af->setTime(this->ui->sliderTrackPos->value());
+  af->setTime(this->ui->sliderTrackPos->value());
+  //qDebug() << af->timestring;
+  this->ui->labelTrackTime->setText(af->timestring);
+  this->ui->labelTrackTime->update();
 }
