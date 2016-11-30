@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>ic_fiber_manual_record_black_48dp.png</file>
+        <file>ic_folder_black_48dp.png</file>
+        <file>ic_play_arrow_black_48dp.png</file>
+        <file>ic_pause_black_48dp.png</file>
+    </qresource>
+</RCC>
