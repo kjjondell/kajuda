@@ -20,20 +20,13 @@ AudioFile::AudioFile(const char *fname, int start_time, int sample_rate) {
 
         frames = decoder.frames();
         channels = decoder.channels();
-        double_buffer = new float[FRAMES_PER_BUFFER * channels];
-        buffer = new float[FRAMES_PER_BUFFER * channels];
+        buffer = new float[2 * FRAMES_PER_BUFFER * channels];
+        buffer_full=new bool[2];
+
     }
     else {
         printf("The file does not exist.");
     }
-
-    for (int i = 0; i < decoder.samplerate() * start_time; i++)
-        decoder.read(buffer, channels);
-
-    /*decoder.read(double_buffer, FRAMES_PER_BUFFER*channels);
-      for (int i = 0; i<FRAMES_PER_BUFFER*channels; i++){
-          buffer[i] = double_buffer[i];
-      }*/
 
     count = 0;
     max_r = 0;
@@ -56,6 +49,13 @@ int AudioFile::getTimeOfSong() { return time_of_song; }
 
 bool AudioFile::start() {
 
+    decoder.read(buffer, 2*FRAMES_PER_BUFFER * channels);
+    for (int i = 0; i < 2; i += 1){
+        buffer_full[i]=true;
+    }
+    buffer_index_read = 0;
+    buffer_index_write = 0;
+
     err = Pa_Initialize();
     if (err != 0) {
         printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
@@ -73,14 +73,10 @@ bool AudioFile::start() {
     }
 
     // decoder.seek(count,SEEK_CUR );
-    decoder = SndfileHandle(filename);
-    for (int i = 0; i < count; i += FRAMES_PER_BUFFER * channels)
-        decoder.read(double_buffer, FRAMES_PER_BUFFER * channels);
-    for (int i = 0; i < FRAMES_PER_BUFFER * channels; i++) {
-        buffer[i] = double_buffer[i];
-    }
+//    decoder = SndfileHandle(filename);
+//    int* a;
 
-    read = false;
+
     PaError err = Pa_StartStream(stream);
 
     return true;
@@ -97,6 +93,9 @@ void AudioFile::getFormattedTime(int time) {
 void AudioFile::setTime(int fraction) {
     // printf("%i ",fraction);
     count = (frames * channels * fraction) / 1000;
+    sf_count_t cnt = count/2;
+    std::cout<<decoder.seek(cnt, SEEK_SET)<<std::endl;
+
     time = ((count / channels) / samplerate);
     getFormattedTime(time_of_song - time);
     // qDebug() << timestring;
@@ -108,29 +107,30 @@ bool AudioFile::foreground() {
     getFormattedTime(time_of_song - time);
     emit formatted_timeChanged(timestring);
 
-    if (!read) {
+    if (!buffer_full[buffer_index_write]) {
         if (count >= frames * channels)
             return false;
 
-        decoder.read(double_buffer, FRAMES_PER_BUFFER * channels);
-        for (int i = 0; i < FRAMES_PER_BUFFER * channels; i++) {
-            buffer[i] = double_buffer[i];
-        }
-        read = true;
-        for (int i = 1; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            if (max_r < buffer[i])
-                max_r = buffer[i];
+        decoder.read((buffer+buffer_index_write*FRAMES_PER_BUFFER * channels), FRAMES_PER_BUFFER * channels);
 
-            if (min_r > buffer[i])
-                min_r = buffer[i];
+        int buffer_real_index = (buffer_index_write * FRAMES_PER_BUFFER * channels);
+
+        buffer_full[buffer_index_write] = true;
+        buffer_index_write = (buffer_index_write + 1) % 2;
+        for (int i = 1; i < FRAMES_PER_BUFFER * channels; i += channels) {
+            if (max_r < (buffer+buffer_real_index)[i])
+                max_r = (buffer+buffer_real_index)[i];
+
+            if (min_r > (buffer+buffer_real_index)[i])
+                min_r = (buffer+buffer_real_index)[i];
         }
 
         for (int i = 0; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            if (max_l < buffer[i])
-                max_l = buffer[i];
+            if (max_l < (buffer+buffer_real_index)[i])
+                max_l = (buffer+buffer_real_index)[i];
 
-            if (min_l > buffer[i])
-                min_l = buffer[i];
+            if (min_l > (buffer+buffer_real_index)[i])
+                min_l = (buffer+buffer_real_index)[i];
         }
 
         float x = log10((max_r - min_r) / 2);
@@ -188,14 +188,14 @@ int AudioFile::paCallbackFunction(const void *input,
 
     unsigned long i;
     (void)input;
-
+    int buffer_real_index = (buffer_index_read * FRAMES_PER_BUFFER * channels);
     for (i = 0; i < frameCount * channels; i++) {
-        *out++ = buffer[i];
+        *out++ = (buffer + buffer_real_index)[i];
         count++;
     }
 
-    read = false;
-
+    buffer_full[buffer_index_read] = false;
+    buffer_index_read = (buffer_index_read+1)%2;
     return count >= frames * channels ? paComplete : paContinue;
 }
 

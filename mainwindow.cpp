@@ -145,8 +145,9 @@ void MainWindow::on_buttonPlay_clicked()
 void MainWindow::on_sliderTrackPos_sliderReleased()
 {
     slider_pressed = false;
-    if(isPlaying)
-        emit stopPlayback();
+    if(isPlaying){
+        af->stop();
+    }
   af->setTime(this->ui->sliderTrackPos->value());
   //qDebug() << af->timestring;
   this->ui->labelTrackTime->setText(af->timestring);

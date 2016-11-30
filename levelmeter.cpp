@@ -49,7 +49,7 @@
 
 // Constants
 const int RedrawInterval = 100; // ms
-const float PeakDecayRate = 1;
+const float PeakDecayRate = 0.001;
 const int PeakHoldLevelDuration = 2000; // ms
 
 
@@ -134,7 +134,7 @@ void LevelMeter::paintEvent(QPaintEvent *event)
     QPainter painter(this);
 //    painter.fillRect(rect(), Qt::black);
 
-//    QRect bar = rect();
+    QRect bar = rect();
 
     bar.setTop(rect().top() + (1.0 - peakHoldLevel) * rect().height());
     bar.setBottom(bar.top() + 5);
