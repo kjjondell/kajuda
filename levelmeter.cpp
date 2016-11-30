@@ -131,38 +131,38 @@ void LevelMeter::paintEvent(QPaintEvent *event)
 
 
 
-//    QPainter painter(this);
+    QPainter painter(this);
 //    painter.fillRect(rect(), Qt::black);
 
 //    QRect bar = rect();
 
-//    bar.setTop(rect().top() + (1.0 - peakHoldLevel) * rect().height());
-//    bar.setBottom(bar.top() + 5);
-//    painter.fillRect(bar, rmsColor);
-//    bar.setBottom(rect().bottom());
+    bar.setTop(rect().top() + (1.0 - peakHoldLevel) * rect().height());
+    bar.setBottom(bar.top() + 5);
+    painter.fillRect(bar, rmsColor);
+    bar.setBottom(rect().bottom());
 
-//    bar.setTop(rect().top() + (1.0 - decayedPeakLevel) * rect().height());
-//    painter.fillRect(bar, peakColor);
+    bar.setTop(rect().top() + (1.0 - decayedPeakLevel) * rect().height());
+    painter.fillRect(bar, peakColor);
 
-//    bar.setTop(rect().top() + (1.0 - rmsLevel) * rect().height());
-//    painter.fillRect(bar, rmsColor);
+    bar.setTop(rect().top() + (1.0 - rmsLevel) * rect().height());
+    painter.fillRect(bar, rmsColor);
 
 
 //    painter.fillRect(rect(), Qt::black);
 
-    QRect bar = rect();
+//    QRect bar = rect();
 
-//    bar.setTop(rect().top() + (1.0 - peakHoldLevel) * rect().height());
-//    bar.setBottom(bar.top() + 5);
+////    bar.setTop(rect().top() + (1.0 - peakHoldLevel) * rect().height());
+////    bar.setBottom(bar.top() + 5);
+////    bar.setBottom(rect().bottom());
+
+////    bar.setTop(rect().top() + (1.0 - decayedPeakLevel) * rect().height());
+
+//    bar.setTop(rect().top() + (1.0 - rmsLevel) * rect().height());
 //    bar.setBottom(rect().bottom());
+//    QPainter painter(this);
+////    painter.fillRect(bar, rmsColor);
+////    painter.fillRect(bar, peakColor);
 
-//    bar.setTop(rect().top() + (1.0 - decayedPeakLevel) * rect().height());
-
-    bar.setTop(rect().top() + (1.0 - rmsLevel) * rect().height());
-    bar.setBottom(rect().bottom());
-    QPainter painter(this);
 //    painter.fillRect(bar, rmsColor);
-//    painter.fillRect(bar, peakColor);
-
-    painter.fillRect(bar, rmsColor);
 }
