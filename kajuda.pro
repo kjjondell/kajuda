@@ -16,13 +16,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
         levelmeter.cpp \
-        audiofile.cpp
+        audiofile.cpp \
+        audioinputfile.cpp
 
 HEADERS  += \
         mainwindow.h \
         levelmeter.h \
-        input_handling.h \
-        audiofile.h
+        audiofile.h \
+        audioinputfile.h
 
 
 
@@ -34,8 +35,7 @@ LIBS += -lportaudio -lsndfile
 RESOURCES += \
     res/res.qrc
 
-HEADERS += \
-    input_handling.h
+HEADERS +=
 
 QMAKE_CXXFLAGS += -std=c++11
 
