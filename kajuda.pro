@@ -15,12 +15,14 @@ TEMPLATE = app
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-        levelmeter.cpp
+        levelmeter.cpp \
+        audiofile.cpp
 
 HEADERS  += \
         mainwindow.h \
         levelmeter.h \
-        input_handling.h
+        input_handling.h \
+        audiofile.h
 
 
 

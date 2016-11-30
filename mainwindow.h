@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "input_handling.h"
+#include "audiofile.h"
 namespace Ui {
 class MainWindow;
 }
