@@ -31,6 +31,7 @@ private:
     void moveSlider(int time);
     void moveLMeter(float amp);
     void moveRMeter(float amp);
+    void openNewFile();
 
     Ui::MainWindow *ui;
     AudioFile* af;

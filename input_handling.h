@@ -126,7 +126,7 @@ public:
         if(af->start())
             while(af->foreground());
                   //Pa_Sleep(500/samplerate);
-        af->stop();
+//        af->stop();
     qDebug()<<"HEU";
         return true;
     }
@@ -139,6 +139,10 @@ public:
 
         PaError err = Pa_StopStream(stream);
         err = Pa_Terminate();
+        if(err != 0){
+            printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
+            return false;
+        }
         return true;
     }
 
@@ -149,7 +153,7 @@ public:
 
     void setTime(int fraction){
         //printf("%i ",fraction);
-        count = (frames*channels*fraction)/100;
+        count = (frames*channels*fraction)/1000;
         time = ((count/channels)  / samplerate);
         getFormattedTime(time_of_song-time);
        // qDebug() << timestring;
@@ -158,7 +162,7 @@ public:
 
     bool foreground(){
         //static int justToDemonstrateHowThisWorks = 0;
-        emit timeChanged(time*100 / time_of_song);
+        emit timeChanged(time*1000 / time_of_song);
         getFormattedTime(time_of_song-time);
         emit formatted_timeChanged(timestring);
 
@@ -194,7 +198,7 @@ public:
         }
 
 
-        if ( (int)((count/channels) / samplerate) != time){
+        if ( (int)((count/channels)/samplerate) != time){
             time = ((count/channels)  / samplerate);
 //            printf("%i \n",  time);
 
@@ -227,6 +231,7 @@ private:
         for (i = 0; i < frameCount*channels; i++){
             *out++ = buffer[i];
             count++;
+
         }
         
         read = false;
@@ -322,6 +327,7 @@ public:
 
     void stop(){
         Pa_StopStream(stream);
+        Pa_Terminate();
     }
     
     static void record(AudioInputFile* af){
