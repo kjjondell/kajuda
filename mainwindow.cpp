@@ -9,11 +9,12 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    isPlaying(false)
 {
     ui->setupUi(this);
     slider_pressed = false;
-    filename= std::string("/home/julien/Musique/Mixxx/Demon_You_are_my_high.wav");
+    filename= std::string("../kajuda/Snare02.wav");
     openNewFile();
 }
 
@@ -25,6 +26,9 @@ MainWindow::~MainWindow()
 void MainWindow::openNewFile(){
     const char* f_name = this->filename.c_str();
     af = new AudioFile(f_name,0);
+
+    connect(this, &MainWindow::startPlayback, af, &AudioFile::play);
+    connect(this, &MainWindow::stopPlayback, af, &AudioFile::stop);
    // printf("\n");
    // printf(af->filename);
     QObject::connect(af, &AudioFile::timeChanged,
@@ -118,13 +122,12 @@ void MainWindow::on_buttonPlay_clicked()
     QString icon;
     if (isPlaying) {
         icon = ":/ic_play_arrow_black_48dp.png";
-        af->stop();
+        emit stopPlayback();
 
     } else {
 
         icon = ":/ic_pause_black_48dp.png";
-        std::thread t1(AudioFile::play, af);
-        t1.detach();
+        emit startPlayback();
 
     }
 
@@ -138,14 +141,13 @@ void MainWindow::on_sliderTrackPos_sliderReleased()
 {
     slider_pressed = false;
     if(isPlaying)
-        af->stop();
+        emit stopPlayback();
   af->setTime(this->ui->sliderTrackPos->value());
   //qDebug() << af->timestring;
   this->ui->labelTrackTime->setText(af->timestring);
   this->ui->labelTrackTime->update();
   if(isPlaying){
-      std::thread t1(AudioFile::play, af);
-      t1.detach();
+      emit startPlayback();
   }
 }
 

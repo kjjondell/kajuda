@@ -15,6 +15,10 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+signals:
+    void startPlayback();
+    void stopPlayback();
+
 private slots:
     void on_buttonOpenFile_clicked();
 

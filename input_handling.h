@@ -73,7 +73,7 @@ public:
         max_l = 0;
         min_l = 0;
 
-        time_of_song = (int)((frames)/samplerate);
+        time_of_song = ((frames)/samplerate);
         setTime(0);
      //   printf("Time of song: %i:%s%i \n",  time/60, time%60 <= 9 ? "0" : "",  time%60);
     }
@@ -122,29 +122,7 @@ public:
         return true;
     }
 
-    static bool play(AudioFile* af){
-        if(af->start())
-            while(af->foreground());
-                  //Pa_Sleep(500/samplerate);
-//        af->stop();
-    qDebug()<<"HEU";
-        return true;
-    }
 
-    bool stop (){
-        if(err != 0){
-            printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
-            return false;
-        }
-
-        PaError err = Pa_StopStream(stream);
-        err = Pa_Terminate();
-        if(err != 0){
-            printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
-            return false;
-        }
-        return true;
-    }
 
     void getFormattedTime(int time){
         timestring = new char[10];
@@ -214,6 +192,31 @@ signals:
     void l_amplitude(float amp);
     void r_amplitude(float amp);
 
+public slots:
+    bool play(){
+        if(start())
+            while(foreground())
+                ;
+    qDebug()<<"HEU";
+        return true;
+    }
+
+
+    bool stop (){
+        if(err != 0){
+            printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
+            return false;
+        }
+
+        PaError err = Pa_StopStream(stream);
+        err = Pa_Terminate();
+        if(err != 0){
+            printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
+            return false;
+        }
+        return true;
+    }
+
 private:
     QThread thread;
     
@@ -252,7 +255,8 @@ private:
     
     SndfileHandle decoder;
     PaStream* stream;
-    int samplerate, err, channels, time, time_of_song, deb_count = 0;
+    int samplerate, err, channels, time, deb_count = 0;
+    float time_of_song = 0.0;
     const char* filename;
     unsigned long frames, count;
     float* buffer;
