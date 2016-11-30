@@ -10,11 +10,12 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    isPlaying(false)
+    isPlaying(false),
+    af(nullptr)
 {
     ui->setupUi(this);
     slider_pressed = false;
-    filename= std::string("../kajuda/Snare02.wav");
+    filename= std::string("../kajuda/res/curve.wav");
     openNewFile();
 }
 
@@ -25,6 +26,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::openNewFile(){
     const char* f_name = this->filename.c_str();
+    if(af!=nullptr){
+        delete af;
+    }
     af = new AudioFile(f_name,0);
 
     connect(this, &MainWindow::startPlayback, af, &AudioFile::play);
@@ -122,7 +126,7 @@ void MainWindow::on_buttonPlay_clicked()
     QString icon;
     if (isPlaying) {
         icon = ":/ic_play_arrow_black_48dp.png";
-        emit stopPlayback();
+        af->stop();
 
     } else {
 
