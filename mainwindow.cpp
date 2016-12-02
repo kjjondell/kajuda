@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "audiofile.h"
 #include <QString>
 #include <QFileDialog>
 #include <QIcon>
@@ -30,7 +29,6 @@ void MainWindow::openNewFile(int sampleRate){
 
     const char* f_name = this->filename.c_str();
     if(af!=nullptr){
-
         QString icon;
         if (isPlaying) {
             icon = ":/ic_play_arrow_black_48dp.png";
@@ -98,21 +96,22 @@ void MainWindow::moveSlider(int time){
 
 void MainWindow::on_buttonRecord_clicked()
 {
-//    static bool isRecording = false;
-//    if(!isRecording){
-//    aif = new AudioInputFile("/Volumes/2nd drive/Downloads/new.wav");
+    static bool isRecording = false;
+    if(!isRecording){
+    aif = new AudioInputFile("../kajuda/res/new.wav");
 
-//    QObject::connect(aif, &AudioInputFile::l_amplitude,
-//                     this, &MainWindow::moveLMeter);
+    QObject::connect(aif, &AudioInputFile::l_amplitude,
+                     this, &MainWindow::moveLMeter);
 
-//    QObject::connect(aif, &AudioInputFile::r_amplitude,
-//                     this, &MainWindow::moveRMeter);
+    QObject::connect(aif, &AudioInputFile::r_amplitude,
+                     this, &MainWindow::moveRMeter);
+    QObject::connect(this, &MainWindow::startRecord, aif, &AudioInputFile::record);
 
-//    std::thread t1(AudioInputFile::record, aif);
-//    t1.detach();
-//    } else
-//        aif->stop();
-//    isRecording = !isRecording;
+
+    emit startRecord();
+    } else
+        aif->stop();
+    isRecording = !isRecording;
 
 }
 

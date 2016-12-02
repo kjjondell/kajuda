@@ -30,7 +30,7 @@ public:
 
   bool start();
   bool foreground();
-
+  void record();
   int getTimeOfSong();
   void getFormattedTime(int time);
   void setTime(int fraction);

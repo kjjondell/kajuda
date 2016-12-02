@@ -15,22 +15,27 @@
 #include <QString>
 #include <QThread>
 
-#define FRAMES_PER_BUFFER (1000)
+#define FRAMES_PER_BUFFER (512)
 
 AudioInputFile::AudioInputFile(const char *fname) {
+    moveToThread(&thread);
+    thread.start();
+
     channels = 1;
     samplerate = 44100;
-    frames = samplerate * 5 * channels;
-    buffer = new float[frames];
+//    frames = samplerate * 5 * channels;
+//    buffer = new float[frames]
+    buffer = new float[FRAMES_PER_BUFFER * channels];
     encoder = SndfileHandle(fname, SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_FLOAT,
                             channels, samplerate);
     err = Pa_Initialize();
     stream = 0;
     count = 0;
+    read = false;
 }
 
 bool AudioInputFile::start() {
-    err = Pa_OpenDefaultStream(&stream, channels, 0, paFloat32, samplerate, 512,
+    err = Pa_OpenDefaultStream(&stream, channels, 0, paFloat32, samplerate, FRAMES_PER_BUFFER,
                                &AudioInputFile::paCallback, this);
 
     Pa_StartStream(stream);
@@ -44,7 +49,7 @@ bool AudioInputFile::foreground() {
     }
     if (read) {
         read = false;
-        encoder.write(buffer, 512 * channels);
+        encoder.write(buffer, FRAMES_PER_BUFFER * channels);
         for (int i = 1; i < FRAMES_PER_BUFFER * channels; i += channels) {
             if (max_r < buffer[i])
                 max_r = buffer[i];
@@ -68,7 +73,7 @@ bool AudioInputFile::foreground() {
         min_r = 0;
         max_l = 0;
         min_l = 0;
-        buffer = new float[frames];
+//        buffer = new float[frames];
     }
     return true;
 }
@@ -76,13 +81,13 @@ bool AudioInputFile::foreground() {
 void AudioInputFile::stop() {
     Pa_StopStream(stream);
     Pa_Terminate();
+//    encoder
 }
 
-static void record(AudioInputFile *af) {
-    if (af->start())
-        while (af->foreground())
+void AudioInputFile::record() {
+    if(start())
+        while (foreground())
             ;
-    af->stop();
 }
 
 int AudioInputFile::paCallbackFunction(const void *input, void *output,

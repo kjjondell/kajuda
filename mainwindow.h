@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include "audiofile.h"
-
+#include "audioinputfile.h"
 namespace Ui {
 class MainWindow;
 }
@@ -19,7 +19,7 @@ public:
 signals:
     void startPlayback();
     void stopPlayback();
-
+    void startRecord();
 private slots:
     void on_buttonOpenFile_clicked();
 
@@ -42,6 +42,7 @@ private:
 
     Ui::MainWindow *ui;
     AudioFile* af;
+    AudioInputFile* aif;
     std::string filename;
     int start_time;
     bool slider_pressed, isPlaying;
