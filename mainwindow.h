@@ -27,6 +27,8 @@ private slots:
 
     void on_buttonPlay_clicked();
 
+    void on_applySampleRate_clicked();
+
     void on_sliderTrackPos_sliderReleased();
 
     void on_sliderTrackPos_sliderPressed();
@@ -36,7 +38,7 @@ private:
     void moveSlider(int time);
     void moveLMeter(float amp);
     void moveRMeter(float amp);
-    void openNewFile();
+    void openNewFile(int sampleRate=-1);
 
     Ui::MainWindow *ui;
     AudioFile* af;

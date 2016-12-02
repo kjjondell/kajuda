@@ -34,6 +34,7 @@ public:
   bool foreground();
 
   int getTimeOfSong();
+  int getSampleRate();
   void getFormattedTime(int time);
   void setTime(int fraction);
 

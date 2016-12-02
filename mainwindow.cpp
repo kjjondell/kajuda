@@ -25,7 +25,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::openNewFile(){
+void MainWindow::openNewFile(int sampleRate){
 
 
     const char* f_name = this->filename.c_str();
@@ -40,8 +40,8 @@ void MainWindow::openNewFile(){
         }
         delete af;
     }
-
-    af = new AudioFile(f_name,0);
+    af = new AudioFile(f_name,0,sampleRate);
+    this->ui->spinBoxSampleRate->setValue(af->getSampleRate());
 
     connect(this, &MainWindow::startPlayback, af, &AudioFile::play);
     connect(this, &MainWindow::stopPlayback, af, &AudioFile::stop);
@@ -76,6 +76,12 @@ void MainWindow::on_buttonOpenFile_clicked()
     if(strcmp(f_name,"")!=0)
         this->openNewFile();
 }
+
+void MainWindow::on_applySampleRate_clicked()
+{
+        this->openNewFile(this->ui->spinBoxSampleRate->value());
+}
+
 
 void MainWindow::moveLMeter(float amp){
    this->ui->volmeter1->levelChanged(amp,amp,1000);
@@ -153,3 +159,4 @@ void MainWindow::on_sliderTrackPos_sliderReleased()
 void MainWindow::on_sliderTrackPos_sliderPressed(){
     slider_pressed = true;
 }
+

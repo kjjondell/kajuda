@@ -86,6 +86,10 @@ void AudioFile::getFormattedTime(int time) {
             time % 60);
 }
 
+int AudioFile::getSampleRate(){
+    return samplerate;
+}
+
 void AudioFile::setTime(int fraction) {
     // printf("%i ",fraction);
     count = (frames * channels * fraction) / 1000;
