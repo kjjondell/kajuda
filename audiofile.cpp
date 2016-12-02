@@ -49,6 +49,7 @@ int AudioFile::getTimeOfSong() { return time_of_song; }
 
 bool AudioFile::start() {
 
+
     decoder.read(buffer, 2*FRAMES_PER_BUFFER * channels);
     for (int i = 0; i < 2; i += 1){
         buffer_full[i]=true;
@@ -72,11 +73,6 @@ bool AudioFile::start() {
         printf("An error has occured:\n%s\n", Pa_GetErrorText(err));
     }
 
-    // decoder.seek(count,SEEK_CUR );
-//    decoder = SndfileHandle(filename);
-//    int* a;
-
-
     PaError err = Pa_StartStream(stream);
 
     return true;
@@ -94,7 +90,7 @@ void AudioFile::setTime(int fraction) {
     // printf("%i ",fraction);
     count = (frames * channels * fraction) / 1000;
     sf_count_t cnt = count/2;
-    std::cout<<decoder.seek(cnt, SEEK_SET)<<std::endl;
+    decoder.seek(cnt, SEEK_SET);
 
     time = ((count / channels) / samplerate);
     getFormattedTime(time_of_song - time);

@@ -26,10 +26,21 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::openNewFile(){
+
+
     const char* f_name = this->filename.c_str();
     if(af!=nullptr){
+
+        QString icon;
+        if (isPlaying) {
+            icon = ":/ic_play_arrow_black_48dp.png";
+            af->stop();
+            isPlaying = !isPlaying;
+            this->ui->buttonPlay->setIcon(QIcon(icon));
+        }
         delete af;
     }
+
     af = new AudioFile(f_name,0);
 
     connect(this, &MainWindow::startPlayback, af, &AudioFile::play);
@@ -59,29 +70,11 @@ void MainWindow::on_buttonOpenFile_clicked()
 {
 //    TODO: Check filename
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open Audio File"), "~");
+
     filename = fileName.toStdString();
-    this->openNewFile();
-  // printf(f_name);
-//    af = new AudioFile(f_name,0);
-//   // printf("\n");
-//   // printf(af->filename);
-//    QObject::connect(af, &AudioFile::timeChanged,
-//                     this, &MainWindow::moveSlider);
-
-//    QObject::connect(af, &AudioFile::formatted_timeChanged,
-//                     this->ui->labelTrackTime, &QLabel::setText);
-
-//    QObject::connect(af, &AudioFile::l_amplitude,
-//                     this, &MainWindow::moveLMeter);
-
-//    QObject::connect(af, &AudioFile::r_amplitude,
-//                     this, &MainWindow::moveRMeter);
-
-//    this->ui->labelInfo->setText(f_name);
-//    this->ui->labelTrackTime->setText(af->timestring);
-//    this->ui->labelTrackTime->update();
-//   // this->setTime(af->getTimeOfSong());
-//
+    const char* f_name = this->filename.c_str();
+    if(strcmp(f_name,"")!=0)
+        this->openNewFile();
 }
 
 void MainWindow::moveLMeter(float amp){
