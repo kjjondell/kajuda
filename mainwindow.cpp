@@ -97,22 +97,24 @@ void MainWindow::moveSlider(int time){
 void MainWindow::on_buttonRecord_clicked()
 {
     static bool isRecording = false;
-    if(!isRecording){
-    aif = new AudioInputFile("../kajuda/res/new.wav");
+    if(!isRecording) {
+        QString filename = "../kajuda/res/rec" + QDateTime::currentDateTime().toString("-yyyyMMdd-hhmmss") + ".wav";
+        aif = new AudioInputFile(filename.toStdString().c_str());
 
-    QObject::connect(aif, &AudioInputFile::l_amplitude,
-                     this, &MainWindow::moveLMeter);
+        QObject::connect(aif, &AudioInputFile::l_amplitude,
+                         this, &MainWindow::moveLMeter);
 
-    QObject::connect(aif, &AudioInputFile::r_amplitude,
-                     this, &MainWindow::moveRMeter);
-    QObject::connect(this, &MainWindow::startRecord, aif, &AudioInputFile::record);
+        QObject::connect(aif, &AudioInputFile::r_amplitude,
+                         this, &MainWindow::moveRMeter);
 
+        QObject::connect(this, &MainWindow::startRecord, aif, &AudioInputFile::record);
 
-    emit startRecord();
-    } else
+        emit startRecord();
+    } else {
         aif->stop();
-    isRecording = !isRecording;
+    }
 
+    isRecording = !isRecording;
 }
 
 void MainWindow::on_buttonPlay_clicked()
