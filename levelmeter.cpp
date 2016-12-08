@@ -48,9 +48,9 @@
 
 
 // Constants
-const int RedrawInterval = 100; // ms
+const int RedrawInterval = 50; // ms
 const float PeakDecayRate = 0.001;
-const int PeakHoldLevelDuration = 2000; // ms
+const int PeakHoldLevelDuration = 3000; // ms
 
 
 LevelMeter::LevelMeter(QWidget *parent)
@@ -61,10 +61,11 @@ LevelMeter::LevelMeter(QWidget *parent)
     ,   peakDecayRate(PeakDecayRate)
     ,   peakHoldLevel(0.0)
     ,   redrawTimer(new QTimer(this))
-    ,   rmsColor(Qt::red)
-    ,   peakColor(255, 200, 200, 255)
+    ,   rmsColor(255, 200, 200, 255)
+    ,   peakColor(Qt::green)
+    ,   decayedPeakColor(Qt::magenta)
 {
-    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     setMinimumWidth(30);
 
     connect(redrawTimer, SIGNAL(timeout()), this, SLOT(redrawTimerExpired()));
@@ -86,9 +87,9 @@ void LevelMeter::reset()
 void LevelMeter::levelChanged(float rmsLevel, float peakLevel, int numSamples)
 {
     // Smooth the RMS signal
-    const float smooth = pow(float(0.9), static_cast<float>(numSamples) / 256); // TODO: remove this magic number
+    const float smooth = 0.9;
 
-    rmsLevel = (rmsLevel * smooth) + (rmsLevel * (1.0 - smooth));
+    this->rmsLevel = (this->rmsLevel * smooth) + (rmsLevel * (1.0 - smooth));
 
     if (peakLevel > decayedPeakLevel) {
         peakLevel = peakLevel;
@@ -123,13 +124,7 @@ void LevelMeter::redrawTimerExpired()
 
 void LevelMeter::paintEvent(QPaintEvent *event)
 {
-
-
-
-
     Q_UNUSED(event)
-
-
 
     QPainter painter(this);
 //    painter.fillRect(rect(), Qt::black);
@@ -138,11 +133,11 @@ void LevelMeter::paintEvent(QPaintEvent *event)
 
     bar.setTop(rect().top() + (1.0 - peakHoldLevel) * rect().height());
     bar.setBottom(bar.top() + 5);
-    painter.fillRect(bar, rmsColor);
+    painter.fillRect(bar, peakColor);
     bar.setBottom(rect().bottom());
 
     bar.setTop(rect().top() + (1.0 - decayedPeakLevel) * rect().height());
-    painter.fillRect(bar, peakColor);
+    painter.fillRect(bar, decayedPeakColor);
 
     bar.setTop(rect().top() + (1.0 - rmsLevel) * rect().height());
     painter.fillRect(bar, rmsColor);

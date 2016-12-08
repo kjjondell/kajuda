@@ -117,31 +117,69 @@ bool AudioFile::foreground() {
 
         buffer_full[buffer_index_write] = true;
         buffer_index_write = (buffer_index_write + 1) % 2;
-        for (int i = 1; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            if (max_r < (buffer+buffer_real_index)[i])
-                max_r = (buffer+buffer_real_index)[i];
 
-            if (min_r > (buffer+buffer_real_index)[i])
-                min_r = (buffer+buffer_real_index)[i];
+        float l_sum = 0.0;
+        float r_sum = 0.0;
+
+        for (int i = 1; i < FRAMES_PER_BUFFER * channels; i += channels) {
+            float val = (buffer+buffer_real_index)[i];
+
+            r_sum += val * val;
+
+            if (max_r < val)
+                max_r = val;
+
+            if (min_r > val)
+                min_r = val;
         }
 
         for (int i = 0; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            if (max_l < (buffer+buffer_real_index)[i])
-                max_l = (buffer+buffer_real_index)[i];
+            float val = (buffer+buffer_real_index)[i];
 
-            if (min_l > (buffer+buffer_real_index)[i])
-                min_l = (buffer+buffer_real_index)[i];
+            l_sum += val * val;
+
+            if (max_l < val)
+                max_l = val;
+
+            if (min_l > val)
+                min_l = val;
         }
 
-        float x = log10((max_r - min_r) / 2);
-        emit l_amplitude(1.0 + x);
-        float y = log10((max_l - min_l) / 2);
-        emit r_amplitude(1.0 + y);
+//        qreal peakLevel = 0.0;
+
+//        qreal sum = 0.0;
+//        const char *ptr = m_buffer.constData() + position - m_bufferPosition;
+//        const char *const end = ptr + length;
+//        while (ptr < end) {
+//            const qint16 value = *reinterpret_cast<const qint16*>(ptr);
+//            const qreal fracValue = pcmToReal(value);
+//            peakLevel = qMax(peakLevel, fracValue);
+//            sum += fracValue * fracValue;
+//            ptr += 2;
+//        }
+//        const int numSamples = length / 2;
+//        qreal rmsLevel = sqrt(sum / numSamples);
+
+        float r_rms = sqrt(r_sum / FRAMES_PER_BUFFER);
+        float l_rms = sqrt(l_sum / FRAMES_PER_BUFFER);
+        r_rms = qMax(0.0f, r_rms);
+        r_rms = qMin(1.0f, r_rms);
+        l_rms = qMax(0.0f, l_rms);
+        l_rms = qMin(1.0f, l_rms);
+
+        max_r = max_r;
+        max_l = max_l;
+
+
+        qWarning() << r_rms << max_r;
+        emit r_amplitude(r_rms, max_r);
+        emit l_amplitude(l_rms, max_l);
         // printf("%f %f\n", x, y);
         max_r = 0;
         min_r = 0;
         max_l = 0;
         min_l = 0;
+
     }
 
     if ((int)((count / channels) / samplerate) != time) {

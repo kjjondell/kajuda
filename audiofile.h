@@ -54,8 +54,8 @@ signals:
   void timeChanged(int time);
   void formatted_timeChanged(char *time);
 
-  void l_amplitude(float amp);
-  void r_amplitude(float amp);
+  void l_amplitude(float rms, float peak);
+  void r_amplitude(float rms, float peak);
 
 public slots:
   bool play();

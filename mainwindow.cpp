@@ -81,12 +81,12 @@ void MainWindow::on_applySampleRate_clicked()
 }
 
 
-void MainWindow::moveLMeter(float amp){
-   this->ui->volmeter1->levelChanged(amp,amp,1000);
+void MainWindow::moveLMeter(float rms, float peak){
+   this->ui->volmeter1->levelChanged(rms, peak, 512);
 }
 
-void MainWindow::moveRMeter(float amp){
-    this->ui->volmeter2->levelChanged(amp,amp,1000);
+void MainWindow::moveRMeter(float rms, float peak){
+    this->ui->volmeter2->levelChanged(rms, peak, 512);
 }
 
 void MainWindow::moveSlider(int time){

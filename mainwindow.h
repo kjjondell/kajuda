@@ -36,8 +36,8 @@ private slots:
 private:
 
     void moveSlider(int time);
-    void moveLMeter(float amp);
-    void moveRMeter(float amp);
+    void moveLMeter(float rms, float peak);
+    void moveRMeter(float rms, float peak);
     void openNewFile(int sampleRate=-1);
 
     Ui::MainWindow *ui;

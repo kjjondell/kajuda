@@ -16,7 +16,7 @@
 #include <QString>
 #include <QThread>
 
-#define FRAMES_PER_BUFFER (1000)
+#define FRAMES_PER_BUFFER (128)
 
 class AudioInputFile : public QObject {
   Q_OBJECT
@@ -51,8 +51,8 @@ signals:
   void timeChanged(int time);
   void formatted_timeChanged(char *time);
 
-  void l_amplitude(float amp);
-  void r_amplitude(float amp);
+  void l_amplitude(float rms, float peak);
+  void r_amplitude(float rms, float peak);
 
 public slots:
   void stop();

@@ -43,6 +43,9 @@ bool AudioInputFile::start() {
 }
 
 bool AudioInputFile::foreground() {
+    float l_sum = 0.0;
+    float r_sum = 0.0;
+
     if ((int)((count / channels) / (samplerate)) != time) {
         time = (int)((count / channels) / (samplerate));
         qDebug() << time;
@@ -51,23 +54,38 @@ bool AudioInputFile::foreground() {
         read = false;
         encoder.write(buffer, FRAMES_PER_BUFFER * channels);
         for (int i = 1; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            if (max_r < buffer[i])
-                max_r = buffer[i];
-            if (min_r > buffer[i])
-                min_r = buffer[i];
+            float val = buffer[i];
+
+            r_sum += val * val;
+
+            if (max_r < val)
+                max_r = val;
+
+            if (min_r > val)
+                min_r = val;
         }
 
         for (int i = 0; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            if (max_l < buffer[i])
-                max_l = buffer[i];
-            if (min_l > buffer[i])
-                min_l = buffer[i];
+            float val = buffer[i];
+
+            l_sum += val * val;
+
+            if (max_l < val)
+                max_l = val;
+
+            if (min_l > val)
+                min_l = val;
         }
 
-        float x = log10((max_r - min_r) / 2);
-        emit l_amplitude(1.0 + x);
-        float y = log10((max_l - min_l) / 2);
-        emit r_amplitude(1.0 + y);
+        float r_rms = sqrt(r_sum / FRAMES_PER_BUFFER);
+        float l_rms = sqrt(l_sum / FRAMES_PER_BUFFER);
+        r_rms = qMax(0.0f, r_rms);
+        r_rms = qMin(1.0f, r_rms);
+        l_rms = qMax(0.0f, l_rms);
+        l_rms = qMin(1.0f, l_rms);
+
+        emit r_amplitude(r_rms, max_r);
+        emit l_amplitude(l_rms, max_l);
         // printf("%f %f\n", x, y);
         max_r = 0;
         min_r = 0;

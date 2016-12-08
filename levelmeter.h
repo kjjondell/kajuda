@@ -112,6 +112,7 @@ private:
 
     QColor rmsColor;
     QColor peakColor;
+    QColor decayedPeakColor;
 
 };
 
