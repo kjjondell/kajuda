@@ -17,13 +17,15 @@ SOURCES += \
         mainwindow.cpp \
         levelmeter.cpp \
         audiofile.cpp \
-        audioinputfile.cpp
+        audioinputfile.cpp \
+    buffer.cpp
 
 HEADERS  += \
         mainwindow.h \
         levelmeter.h \
         audiofile.h \
-        audioinputfile.h
+        audioinputfile.h \
+    buffer.h
 
 
 

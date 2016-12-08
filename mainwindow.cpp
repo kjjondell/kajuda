@@ -40,7 +40,6 @@ void MainWindow::openNewFile(int sampleRate){
     }
     af = new AudioFile(f_name,0,sampleRate);
     this->ui->spinBoxSampleRate->setValue(af->getSampleRate());
-
     connect(this, &MainWindow::startPlayback, af, &AudioFile::play);
     connect(this, &MainWindow::stopPlayback, af, &AudioFile::stop);
    // printf("\n");
@@ -60,6 +59,7 @@ void MainWindow::openNewFile(int sampleRate){
     this->ui->labelInfo->setText(f_name);
     this->ui->labelTrackTime->setText(af->timestring);
     this->ui->labelTrackTime->update();
+    this->moveSlider(0);
    // this->setTime(af->getTimeOfSong());
 
 }
@@ -99,6 +99,7 @@ void MainWindow::on_buttonRecord_clicked()
     static bool isRecording = false;
     if(!isRecording) {
         QString filename = "../kajuda/res/rec" + QDateTime::currentDateTime().toString("-yyyyMMdd-hhmmss") + ".wav";
+        recordName = filename;
         aif = new AudioInputFile(filename.toStdString().c_str());
 
         QObject::connect(aif, &AudioInputFile::l_amplitude,
@@ -112,6 +113,8 @@ void MainWindow::on_buttonRecord_clicked()
         emit startRecord();
     } else {
         aif->stop();
+        filename = recordName.toStdString();
+        openNewFile();
     }
 
     isRecording = !isRecording;

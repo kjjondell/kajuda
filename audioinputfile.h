@@ -15,6 +15,7 @@
 #include <QObject>
 #include <QString>
 #include <QThread>
+#include "buffer.h"
 
 #define FRAMES_PER_BUFFER (128)
 
@@ -62,11 +63,11 @@ private:
   SndfileHandle encoder;
   PaStream *stream;
   int samplerate, err, channels, time, deb_count = 0;
+  int buffer_index_write, buffer_index_read =0;
   float time_of_song = 0.0;
   const char *filename;
   unsigned long frames, count;
-  float *buffer;
-  float *double_buffer;
+  Buffer *buffer;
   float *adress;
   float max_r, min_r, max_l, min_l;
   bool read;

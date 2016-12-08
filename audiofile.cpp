@@ -20,8 +20,7 @@ AudioFile::AudioFile(const char *fname, int start_time, int sample_rate) {
 
         frames = decoder.frames();
         channels = decoder.channels();
-        buffer = new float[2 * FRAMES_PER_BUFFER * channels];
-        buffer_full=new bool[2];
+        buffer = new Buffer(2, FRAMES_PER_BUFFER * channels);
 
     }
     else {
@@ -50,9 +49,10 @@ int AudioFile::getTimeOfSong() { return time_of_song; }
 bool AudioFile::start() {
 
 
-    decoder.read(buffer, 2*FRAMES_PER_BUFFER * channels);
-    for (int i = 0; i < 2; i += 1){
-        buffer_full[i]=true;
+
+    for (int i = 0; i < buffer->getNbUnits(); i += 1){
+        decoder.read(buffer->getUnit(i), buffer->getUnitSize());
+        buffer->setFull(i);
     }
     buffer_index_read = 0;
     buffer_index_write = 0;
@@ -107,22 +107,22 @@ bool AudioFile::foreground() {
     getFormattedTime(time_of_song - time);
     emit formatted_timeChanged(timestring);
 
-    if (!buffer_full[buffer_index_write]) {
+    if (!buffer->isFull(buffer_index_write)) {
         if (count >= frames * channels)
             return false;
 
-        decoder.read((buffer+buffer_index_write*FRAMES_PER_BUFFER * channels), FRAMES_PER_BUFFER * channels);
+        float* bufferUnit = buffer->getUnit(buffer_index_write);
+        decoder.read(bufferUnit, buffer->getUnitSize());
 
-        int buffer_real_index = (buffer_index_write * FRAMES_PER_BUFFER * channels);
+        buffer->setFull(buffer_index_write);
 
         buffer_full[buffer_index_write] = true;
-        buffer_index_write = (buffer_index_write + 1) % 2;
 
         float l_sum = 0.0;
         float r_sum = 0.0;
 
-        for (int i = 1; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            float val = (buffer+buffer_real_index)[i];
+        for (int i = 1; i < buffer->getUnitSize(); i += channels) {
+            float val = bufferUnit[i];
 
             r_sum += val * val;
 
@@ -133,8 +133,8 @@ bool AudioFile::foreground() {
                 min_r = val;
         }
 
-        for (int i = 0; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            float val = (buffer+buffer_real_index)[i];
+        for (int i = 0; i < buffer->getUnitSize(); i += channels) {
+            float val = bufferUnit[i];
 
             l_sum += val * val;
 
@@ -145,43 +145,27 @@ bool AudioFile::foreground() {
                 min_l = val;
         }
 
-//        qreal peakLevel = 0.0;
-
-//        qreal sum = 0.0;
-//        const char *ptr = m_buffer.constData() + position - m_bufferPosition;
-//        const char *const end = ptr + length;
-//        while (ptr < end) {
-//            const qint16 value = *reinterpret_cast<const qint16*>(ptr);
-//            const qreal fracValue = pcmToReal(value);
-//            peakLevel = qMax(peakLevel, fracValue);
-//            sum += fracValue * fracValue;
-//            ptr += 2;
-//        }
-//        const int numSamples = length / 2;
-//        qreal rmsLevel = sqrt(sum / numSamples);
-
         float r_rms = sqrt(r_sum / FRAMES_PER_BUFFER);
         float l_rms = sqrt(l_sum / FRAMES_PER_BUFFER);
+
         r_rms = qMax(0.0f, r_rms);
         r_rms = qMin(1.0f, r_rms);
         l_rms = qMax(0.0f, l_rms);
         l_rms = qMin(1.0f, l_rms);
 
-        max_r = max_r;
-        max_l = max_l;
+        max_r = max_r * max_r;
+        max_l = max_l * max_l;
 
-
-        qWarning() << r_rms << max_r;
         emit r_amplitude(r_rms, max_r);
         emit l_amplitude(l_rms, max_l);
-        // printf("%f %f\n", x, y);
+
         max_r = 0;
         min_r = 0;
         max_l = 0;
         min_l = 0;
-
     }
 
+    buffer_index_write = (buffer_index_write + 1) % buffer->getNbUnits();
     if ((int)((count / channels) / samplerate) != time) {
         time = ((count / channels) / samplerate);
         //            printf("%i \n",  time);
@@ -226,14 +210,16 @@ int AudioFile::paCallbackFunction(const void *input,
 
     unsigned long i;
     (void)input;
-    int buffer_real_index = (buffer_index_read * FRAMES_PER_BUFFER * channels);
-    for (i = 0; i < frameCount * channels; i++) {
-        *out++ = (buffer + buffer_real_index)[i];
-        count++;
-    }
+    if(buffer->isFull(buffer_index_read)){
+        float* bufferUnit = buffer->getUnit(buffer_index_read);
+        for (i = 0; i < buffer->getUnitSize(); i++) {
+            *out++ = bufferUnit[i];
+            count++;
+        }
 
-    buffer_full[buffer_index_read] = false;
-    buffer_index_read = (buffer_index_read+1)%2;
+        buffer->setEmpty(buffer_index_read);
+    }
+    buffer_index_read = (buffer_index_read + 1) % buffer->getNbUnits();
     return count >= frames * channels ? paComplete : paContinue;
 }
 

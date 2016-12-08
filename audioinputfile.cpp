@@ -25,7 +25,7 @@ AudioInputFile::AudioInputFile(const char *fname) {
     samplerate = 44100;
 //    frames = samplerate * 5 * channels;
 //    buffer = new float[frames]
-    buffer = new float[FRAMES_PER_BUFFER * channels];
+    buffer = new Buffer(2, FRAMES_PER_BUFFER * channels);
     encoder = SndfileHandle(fname, SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_FLOAT,
                             channels, samplerate);
     err = Pa_Initialize();
@@ -35,6 +35,12 @@ AudioInputFile::AudioInputFile(const char *fname) {
 }
 
 bool AudioInputFile::start() {
+    for (int i = 0; i < buffer->getNbUnits(); i += 1){
+        buffer->setEmpty(i);
+    }
+    buffer_index_read = 0;
+    buffer_index_write = 0;
+
     err = Pa_OpenDefaultStream(&stream, channels, 0, paFloat32, samplerate, FRAMES_PER_BUFFER,
                                &AudioInputFile::paCallback, this);
 
@@ -50,11 +56,12 @@ bool AudioInputFile::foreground() {
         time = (int)((count / channels) / (samplerate));
         qDebug() << time;
     }
-    if (read) {
-        read = false;
-        encoder.write(buffer, FRAMES_PER_BUFFER * channels);
-        for (int i = 1; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            float val = buffer[i];
+    if (buffer->isFull(buffer_index_read)) {
+        float* bufferUnit = buffer->getUnit(buffer_index_read);
+        encoder.write(bufferUnit, buffer->getUnitSize());
+        buffer->setEmpty(buffer_index_read);
+        for (int i = 1; i < buffer->getUnitSize(); i += channels) {
+            float val = bufferUnit[i];
 
             r_sum += val * val;
 
@@ -65,8 +72,8 @@ bool AudioInputFile::foreground() {
                 min_r = val;
         }
 
-        for (int i = 0; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            float val = buffer[i];
+        for (int i = 0; i < buffer->getUnitSize(); i += channels) {
+            float val = bufferUnit[i];
 
             l_sum += val * val;
 
@@ -84,6 +91,9 @@ bool AudioInputFile::foreground() {
         l_rms = qMax(0.0f, l_rms);
         l_rms = qMin(1.0f, l_rms);
 
+        max_r *= max_r;
+        max_l *= max_l;
+
         emit r_amplitude(r_rms, max_r);
         emit l_amplitude(l_rms, max_l);
         // printf("%f %f\n", x, y);
@@ -91,8 +101,9 @@ bool AudioInputFile::foreground() {
         min_r = 0;
         max_l = 0;
         min_l = 0;
-//        buffer = new float[frames];
     }
+
+    buffer_index_read = (buffer_index_read + 1) % buffer->getNbUnits();
     return true;
 }
 
@@ -118,13 +129,15 @@ int AudioInputFile::paCallbackFunction(const void *input, void *output,
 
     unsigned long i;
     (void)output;
-
-    for (i = 0; i < frameCount * channels; i++) {
-        buffer[i] = *in++;
-        count++;
+    if(!buffer->isFull(buffer_index_write)){
+        float* bufferUnit = buffer->getUnit(buffer_index_write);
+        for (i = 0; i < buffer->getUnitSize(); i++) {
+            bufferUnit[i] = *in++;
+            count++;
+        }
+        buffer->setFull(buffer_index_write);
     }
-
-    read = true;
+    buffer_index_write = (buffer_index_write + 1) % buffer->getNbUnits();
 
     return paContinue;
 }
