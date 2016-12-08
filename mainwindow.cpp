@@ -99,6 +99,7 @@ void MainWindow::on_buttonRecord_clicked()
     static bool isRecording = false;
     if(!isRecording) {
         QString filename = "../kajuda/res/rec" + QDateTime::currentDateTime().toString("-yyyyMMdd-hhmmss") + ".wav";
+        recordName = filename;
         aif = new AudioInputFile(filename.toStdString().c_str());
 
         QObject::connect(aif, &AudioInputFile::l_amplitude,
@@ -112,6 +113,8 @@ void MainWindow::on_buttonRecord_clicked()
         emit startRecord();
     } else {
         aif->stop();
+        filename = recordName.toStdString();
+        openNewFile();
     }
 
     isRecording = !isRecording;

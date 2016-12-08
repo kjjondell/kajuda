@@ -44,6 +44,7 @@ private:
     AudioFile* af;
     AudioInputFile* aif;
     std::string filename;
+    QString recordName;
     int start_time;
     bool slider_pressed, isPlaying;
 

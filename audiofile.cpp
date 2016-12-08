@@ -20,8 +20,7 @@ AudioFile::AudioFile(const char *fname, int start_time, int sample_rate) {
 
         frames = decoder.frames();
         channels = decoder.channels();
-        buffer = new float[2 * FRAMES_PER_BUFFER * channels];
-        buffer_full=new bool[2];
+        buffer = new Buffer(2, FRAMES_PER_BUFFER * channels);
 
     }
     else {
@@ -50,9 +49,10 @@ int AudioFile::getTimeOfSong() { return time_of_song; }
 bool AudioFile::start() {
 
 
-    decoder.read(buffer, 2*FRAMES_PER_BUFFER * channels);
-    for (int i = 0; i < 2; i += 1){
-        buffer_full[i]=true;
+
+    for (int i = 0; i < buffer->getNbUnits(); i += 1){
+        decoder.read(buffer->getUnit(i), buffer->getUnitSize());
+        buffer->setFull(i);
     }
     buffer_index_read = 0;
     buffer_index_write = 0;
@@ -107,30 +107,29 @@ bool AudioFile::foreground() {
     getFormattedTime(time_of_song - time);
     emit formatted_timeChanged(timestring);
 
-    if (!buffer_full[buffer_index_write]) {
+    if (!buffer->isFull(buffer_index_write)) {
         if (count >= frames * channels)
             return false;
 
-        decoder.read((buffer+buffer_index_write*FRAMES_PER_BUFFER * channels), FRAMES_PER_BUFFER * channels);
+        float* bufferUnit = buffer->getUnit(buffer_index_write);
+        decoder.read(bufferUnit, buffer->getUnitSize());
 
-        int buffer_real_index = (buffer_index_write * FRAMES_PER_BUFFER * channels);
+        buffer->setFull(buffer_index_write);
 
-        buffer_full[buffer_index_write] = true;
-        buffer_index_write = (buffer_index_write + 1) % 2;
-        for (int i = 1; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            if (max_r < (buffer+buffer_real_index)[i])
-                max_r = (buffer+buffer_real_index)[i];
+        for (int i = 1; i < buffer->getUnitSize(); i += channels) {
+            if (max_r < bufferUnit[i])
+                max_r = bufferUnit[i];
 
-            if (min_r > (buffer+buffer_real_index)[i])
-                min_r = (buffer+buffer_real_index)[i];
+            if (min_r > bufferUnit[i])
+                min_r = bufferUnit[i];
         }
 
-        for (int i = 0; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            if (max_l < (buffer+buffer_real_index)[i])
-                max_l = (buffer+buffer_real_index)[i];
+        for (int i = 0; i < buffer->getUnitSize(); i += channels) {
+            if (max_l < bufferUnit[i])
+                max_l = bufferUnit[i];
 
-            if (min_l > (buffer+buffer_real_index)[i])
-                min_l = (buffer+buffer_real_index)[i];
+            if (min_l > bufferUnit[i])
+                min_l = bufferUnit[i];
         }
 
         float x = log10((max_r - min_r) / 2);
@@ -143,7 +142,7 @@ bool AudioFile::foreground() {
         max_l = 0;
         min_l = 0;
     }
-
+    buffer_index_write = (buffer_index_write + 1) % buffer->getNbUnits();
     if ((int)((count / channels) / samplerate) != time) {
         time = ((count / channels) / samplerate);
         //            printf("%i \n",  time);
@@ -188,14 +187,16 @@ int AudioFile::paCallbackFunction(const void *input,
 
     unsigned long i;
     (void)input;
-    int buffer_real_index = (buffer_index_read * FRAMES_PER_BUFFER * channels);
-    for (i = 0; i < frameCount * channels; i++) {
-        *out++ = (buffer + buffer_real_index)[i];
-        count++;
-    }
+    if(buffer->isFull(buffer_index_read)){
+        float* bufferUnit = buffer->getUnit(buffer_index_read);
+        for (i = 0; i < buffer->getUnitSize(); i++) {
+            *out++ = bufferUnit[i];
+            count++;
+        }
 
-    buffer_full[buffer_index_read] = false;
-    buffer_index_read = (buffer_index_read+1)%2;
+        buffer->setEmpty(buffer_index_read);
+    }
+    buffer_index_read = (buffer_index_read + 1) % buffer->getNbUnits();
     return count >= frames * channels ? paComplete : paContinue;
 }
 

@@ -25,7 +25,7 @@ AudioInputFile::AudioInputFile(const char *fname) {
     samplerate = 44100;
 //    frames = samplerate * 5 * channels;
 //    buffer = new float[frames]
-    buffer = new float[FRAMES_PER_BUFFER * channels];
+    buffer = new Buffer(2, FRAMES_PER_BUFFER * channels);
     encoder = SndfileHandle(fname, SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_FLOAT,
                             channels, samplerate);
     err = Pa_Initialize();
@@ -35,6 +35,12 @@ AudioInputFile::AudioInputFile(const char *fname) {
 }
 
 bool AudioInputFile::start() {
+    for (int i = 0; i < buffer->getNbUnits(); i += 1){
+        buffer->setEmpty(i);
+    }
+    buffer_index_read = 0;
+    buffer_index_write = 0;
+
     err = Pa_OpenDefaultStream(&stream, channels, 0, paFloat32, samplerate, FRAMES_PER_BUFFER,
                                &AudioInputFile::paCallback, this);
 
@@ -47,21 +53,22 @@ bool AudioInputFile::foreground() {
         time = (int)((count / channels) / (samplerate));
         qDebug() << time;
     }
-    if (read) {
-        read = false;
-        encoder.write(buffer, FRAMES_PER_BUFFER * channels);
-        for (int i = 1; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            if (max_r < buffer[i])
-                max_r = buffer[i];
-            if (min_r > buffer[i])
-                min_r = buffer[i];
+    if (buffer->isFull(buffer_index_read)) {
+        float* bufferUnit = buffer->getUnit(buffer_index_read);
+        encoder.write(bufferUnit, buffer->getUnitSize());
+        buffer->setEmpty(buffer_index_read);
+        for (int i = 1; i < buffer->getUnitSize(); i += channels) {
+            if (max_r < bufferUnit[i])
+                max_r = bufferUnit[i];
+            if (min_r > bufferUnit[i])
+                min_r = bufferUnit[i];
         }
 
-        for (int i = 0; i < FRAMES_PER_BUFFER * channels; i += channels) {
-            if (max_l < buffer[i])
-                max_l = buffer[i];
-            if (min_l > buffer[i])
-                min_l = buffer[i];
+        for (int i = 0; i < buffer->getUnitSize(); i += channels) {
+            if (max_l < bufferUnit[i])
+                max_l = bufferUnit[i];
+            if (min_l > bufferUnit[i])
+                min_l = bufferUnit[i];
         }
 
         float x = log10((max_r - min_r) / 2);
@@ -75,6 +82,7 @@ bool AudioInputFile::foreground() {
         min_l = 0;
 //        buffer = new float[frames];
     }
+    buffer_index_read = (buffer_index_read + 1) % buffer->getNbUnits();
     return true;
 }
 
@@ -100,13 +108,15 @@ int AudioInputFile::paCallbackFunction(const void *input, void *output,
 
     unsigned long i;
     (void)output;
-
-    for (i = 0; i < frameCount * channels; i++) {
-        buffer[i] = *in++;
-        count++;
+    if(!buffer->isFull(buffer_index_write)){
+        float* bufferUnit = buffer->getUnit(buffer_index_write);
+        for (i = 0; i < buffer->getUnitSize(); i++) {
+            bufferUnit[i] = *in++;
+            count++;
+        }
+        buffer->setFull(buffer_index_write);
     }
-
-    read = true;
+    buffer_index_write = (buffer_index_write + 1) % buffer->getNbUnits();
 
     return paContinue;
 }

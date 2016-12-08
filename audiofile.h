@@ -17,6 +17,7 @@
 #include <QThread>
 
 #define FRAMES_PER_BUFFER (1000)
+#include "buffer.h"
 
 class AudioFile : public QObject {
   Q_OBJECT
@@ -69,8 +70,7 @@ private:
   float time_of_song = 0.0;
   const char *filename;
   unsigned long frames, count;
-  float *buffer;
-  bool *buffer_full;
+  Buffer* buffer;
   float *adress;
   float max_r, min_r, max_l, min_l;
   bool read;
