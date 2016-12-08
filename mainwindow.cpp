@@ -40,7 +40,6 @@ void MainWindow::openNewFile(int sampleRate){
     }
     af = new AudioFile(f_name,0,sampleRate);
     this->ui->spinBoxSampleRate->setValue(af->getSampleRate());
-
     connect(this, &MainWindow::startPlayback, af, &AudioFile::play);
     connect(this, &MainWindow::stopPlayback, af, &AudioFile::stop);
    // printf("\n");
@@ -60,6 +59,7 @@ void MainWindow::openNewFile(int sampleRate){
     this->ui->labelInfo->setText(f_name);
     this->ui->labelTrackTime->setText(af->timestring);
     this->ui->labelTrackTime->update();
+    this->moveSlider(0);
    // this->setTime(af->getTimeOfSong());
 
 }
