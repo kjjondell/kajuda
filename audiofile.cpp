@@ -116,8 +116,6 @@ bool AudioFile::foreground() {
 
         buffer->setFull(buffer_index_write);
 
-        buffer_full[buffer_index_write] = true;
-
         float l_sum = 0.0;
         float r_sum = 0.0;
 
